@@ -1,10 +1,5 @@
-#rot = 180
+#p button_down?(KB_RIGHT)
 
-#p Math.sin(rot * (Math::PI/180))
+#p ((1..10).include?(1))
 
-
-#draw_rot
-#offset_x
-#offset_y
-
-p button_down?(KB_RIGHT)
+p Math.sqrt(16)
