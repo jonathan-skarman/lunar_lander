@@ -10,7 +10,7 @@ class Lander
 		@y_vel = 0.0
 		@thrust = 0.035
 		@g = 0.01625
-		@air_res = 0.995
+		@air_res = 0.005 #number between 0 and 1
 		@rotation = 0.0
 		@rotation_speed = 1.80
 		@landed = false
@@ -29,15 +29,15 @@ class Lander
 			@rotation = 0
 		end
 
-		@y_vel += @g
+		#@y_vel += @g
 
 		if Gosu.button_down?(Gosu::KB_UP)
 			@x_vel += @thrust * (Math.cos(@rotation * (Math::PI/180)))
 			@y_vel -= @thrust * (Math.sin(@rotation * (Math::PI/180)))
 		end
 
-		@x_vel *= @air_res
-		@y_vel *= @air_res
+		@x_vel *= (1 - @air_res)
+		@y_vel *= (1 - @air_res)
 
 		@x += @x_vel
 		@y += @y_vel
@@ -75,39 +75,104 @@ class Lander
 	end
 end
 
-class Ground
+class Terrain
 
-	def initialize
-		@x = [0, 10000]
-		@y = 400
+  def initialize
+    @white = Gosu::Color.argb(0xff_ffffff)
+    @terrain_size = 500
+    @terrain_aggressiveness = (40..60)
+    @terrain_height_soft = (100..200) # approximate
+		@terrain_height_hard = (0..300)
+    @terrain_res = 40
+		@terrain_offset = 500
+
+    @flat = Array.new(@terrain_size) {rand(3) == 1}
+    @terrain = Array.new(@terrain_size)
+    generate_world()
+  end
+
+  def generate_world
+    modifier = 0.5
+    up = rand > modifier
+    last_up = up
+    last_y = rand(@terrain_height_soft)
+    i = 0
+
+    while i < @flat.length
+
+      if @flat[i]
+        @terrain[i] = last_y
+
+        if last_y < @terrain_height_soft.begin
+          up = false
+        elsif last_y > @terrain_height_soft.end
+          up = true
+        else
+          up = rand > modifier
+        end
+
+      else
+        change = rand(@terrain_aggressiveness)
+
+        if up
+					# if last_y
+          last_y -= change
+        else
+          last_y += change
+        end
+
+				@terrain[i] = last_y
+      end
+
+      i += 1
+    end
+  end
+
+	def y(x)
+		@terrain[x/@terrain_res]+@terrain_offset
 	end
 
-	def draw
-		Gosu::draw_line(@x[0], @y, Gosu::Color.argb(0xff_ffffff), @x[1], @y, Gosu::Color.argb(0xff_ffffff), 0, mode = :default)
+	def is_flat(x)
+		@flat[x/@terrain_res]
 	end
 
-	def x
-		@x
-	end
-
-	def y
-		@y
-	end
+  def draw
+    i = 0
+    while i < @terrain.length - 1
+      Gosu::draw_line(i*@terrain_res, @terrain[i]+@terrain_offset, @white, (i+1)*@terrain_res, @terrain[i+1]+@terrain_offset, @white)
+      i += 1
+    end
+  end
 end
 
 class Game < Gosu::Window
-	#konstruktor
+
 	def initialize
-		super(600, 800, {fullscreen: false, resizable: true, borderless: false})
+		super(600, 800, {fullscreen: true, resizable: true, borderless: false})
 		self.caption = "Lunar Lander"
 		self.reset
 	end
 
 	def reset
 		@lander = Lander.new
-		@ground = Ground.new
+		@terrain = Terrain.new
 		@f_pressed = false
 		@landing_rotation = (80..100)
+	end
+
+	def does_crash #make work
+		@lander_range = (((@lander.y.to_i) -20)..((@lander.y.to_i) +20))
+		if @lander_range.include?(@terrain.y(@lander.x))#if it hits ground
+			if @lander.total_speed <= 0.7 && @landing_rotation.include?(@lander.rotation) && @terrain.is_flat(@lander.x)#if it lands
+				p "landning " + @lander.total_speed.to_s
+				@lander.landing
+			else #or else crashes
+				p "krash " + @lander.total_speed.to_s
+				@lander.landing
+			end
+			sleep(1) #waits
+			self.reset #then resets game
+		end
 	end
 
 	def update
@@ -120,23 +185,14 @@ class Game < Gosu::Window
 			@f_pressed = false
 		end
 
-		@lander_range = (((@lander.y.to_i) -20)..((@lander.y.to_i) +20))
-		if @lander_range.include?(@ground.y) && !@lander.landed
-			if @lander.total_speed <= 0.7 && @landing_rotation.include?(@lander.rotation)
-				p "landning " + @lander.total_speed.to_s
-				@lander.landing
-			else
-				p "krash " + @lander.total_speed.to_s
-				@lander.landing
-			end
-			sleep(1)
-			self.reset
+		if !@lander.landed
+			does_crash() #does it crash?
 		end
 	end
 
 	def draw
 		@lander.draw
-		@ground.draw
+		@terrain.draw
 	end
 end
 
