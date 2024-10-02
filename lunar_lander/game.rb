@@ -29,7 +29,7 @@ class Lander
 			@rotation = 0
 		end
 
-		#@y_vel += @g
+		@y_vel += @g
 
 		if Gosu.button_down?(Gosu::KB_UP)
 			@x_vel += @thrust * (Math.cos(@rotation * (Math::PI/180)))
