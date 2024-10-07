@@ -80,11 +80,11 @@ class Terrain
   def initialize
     @white = Gosu::Color.argb(0xff_ffffff)
     @terrain_size = 500
-    @terrain_aggressiveness = (40..60)
+    @terrain_aggressiveness = (10..40)
     @terrain_height_soft = (100..200) # approximate
-		@terrain_height_hard = (0..300)
+		@terrain_height_hard = (0..400)
     @terrain_res = 20
-		@terrain_offset = 500
+		@terrain_offset = 400
 
     @flat = Array.new(@terrain_size) {rand(3) == 1}
     @terrain = Array.new(@terrain_size)
@@ -115,9 +115,24 @@ class Terrain
         change = rand(@terrain_aggressiveness)
 
         if up
-					# if last_y
+					if last_y < @terrain_height_hard.begin
+						@flat[i] = true
+						change = 0
+						modifier = 1
+					else
+						modifier = 0.5
+					end
+
           last_y -= change
         else
+					if last_y > @terrain_height_hard.end
+						@flat[i] = true
+						change = 0
+						modifier = 0
+					else
+						modifier = 0.5
+					end
+
           last_y += change
         end
 
@@ -162,7 +177,6 @@ class Game < Gosu::Window
 	end
 
 	def does_crash #make work
-		#@lander_range = (((@lander.y.to_i) -20)..((@lander.y.to_i) +20))
 		if (@lander.y + 30) > (@terrain.y(@lander.x))#if it hits ground
 			if @lander.total_speed <= 0.7 && @landing_rotation.include?(@lander.rotation) && @terrain.is_flat(@lander.x)#if it lands
 				p "landning " + @lander.total_speed.to_s
