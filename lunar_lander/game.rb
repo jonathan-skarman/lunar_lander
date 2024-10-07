@@ -45,7 +45,7 @@ class Lander
 	end
 
 	def draw
-		@image.draw_rot(@x, @y, 0, (90 - @rotation))
+		@image.draw_rot(@x-19, @y, 0, (90 - @rotation))
 	end
 
 	def x
@@ -83,7 +83,7 @@ class Terrain
     @terrain_aggressiveness = (40..60)
     @terrain_height_soft = (100..200) # approximate
 		@terrain_height_hard = (0..300)
-    @terrain_res = 40
+    @terrain_res = 20
 		@terrain_offset = 500
 
     @flat = Array.new(@terrain_size) {rand(3) == 1}
@@ -129,11 +129,12 @@ class Terrain
   end
 
 	def y(x)
-		@terrain[x/@terrain_res]+@terrain_offset
+		(@terrain[x/@terrain_res] + @terrain[x/@terrain_res - 1]) / 2 + @terrain_offset
 	end
 
 	def is_flat(x)
 		@flat[x/@terrain_res]
+		p @flat[x/@terrain_res]
 	end
 
   def draw
@@ -161,8 +162,8 @@ class Game < Gosu::Window
 	end
 
 	def does_crash #make work
-		@lander_range = (((@lander.y.to_i) -20)..((@lander.y.to_i) +20))
-		if @lander_range.include?(@terrain.y(@lander.x))#if it hits ground
+		#@lander_range = (((@lander.y.to_i) -20)..((@lander.y.to_i) +20))
+		if (@lander.y + 30) > (@terrain.y(@lander.x))#if it hits ground
 			if @lander.total_speed <= 0.7 && @landing_rotation.include?(@lander.rotation) && @terrain.is_flat(@lander.x)#if it lands
 				p "landning " + @lander.total_speed.to_s
 				@lander.landing
