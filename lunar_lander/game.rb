@@ -86,7 +86,7 @@ class Terrain
     @terrain_res = 20
 		@terrain_offset = 400
 
-    @flat = Array.new(@terrain_size) {rand(3) == 1}
+    @flat = Array.new(@terrain_size) {rand(4) == 1}
     @terrain = Array.new(@terrain_size)
     generate_world()
   end
@@ -114,23 +114,19 @@ class Terrain
       else
         change = rand(@terrain_aggressiveness)
 
+				# if rand > 0.8
+				# 	up = !up
+				# end
+
         if up
 					if last_y < @terrain_height_hard.begin
-						@flat[i] = true
-						change = 0
-						modifier = 1
-					else
-						modifier = 0.5
+						up = false
 					end
 
           last_y -= change
         else
 					if last_y > @terrain_height_hard.end
-						@flat[i] = true
-						change = 0
-						modifier = 0
-					else
-						modifier = 0.5
+						up = true
 					end
 
           last_y += change
